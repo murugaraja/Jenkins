@@ -1,0 +1,46 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers/>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.82">
+    <script>node {
+    try{
+    stage &apos;Clone&apos;
+    git &apos;https://github.com/murugaraja/spring-boot-rest-example.git&apos;
+    
+    stage &apos;Compile Build Package&apos;
+    bat label: &apos;package&apos;, script: &apos;mvn clean package&apos;
+    
+    stage &apos;Archive&apos;
+    archiveArtifacts artifacts: &apos;target/*.war&apos;, followSymlinks: false
+    
+    stage &apos;Mail&apos;
+    notify(&apos;Success&apos;)
+    
+    step([$class: &apos;JUnitResultArchiver&apos;, testResults: &apos;target/surefire-reports/*.xml&apos;])
+    
+    }catch (err){
+        echo err+&apos;00000000000000000000000000&apos;
+    }
+    
+}
+
+def notify(status){
+    emailext (
+      to: &quot;murugarajamca@gmail.com&quot;,
+      subject: &quot;${status}: Job &apos;${env.JOB_NAME} [${env.BUILD_NUMBER}]&apos;&quot;,
+      body: &quot;&quot;&quot;&lt;p&gt;${status}: Job &apos;${env.JOB_NAME} [${env.BUILD_NUMBER}]&apos;:&lt;/p&gt;
+        &lt;p&gt;Check console output at &lt;a href=&apos;${env.BUILD_URL}&apos;&gt;${env.JOB_NAME} [${env.BUILD_NUMBER}]&lt;/a&gt;&lt;/p&gt;&quot;&quot;&quot;,
+    )
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
